@@ -232,7 +232,7 @@ mkredirect(struct REQUEST *req)
 			"Content-Length: %" PRId64 "\r\n",
 			"302 Redirect",server_name,
 			req->keep_alive ? "Keep-Alive" : "Close",
-			req->hostname,tcp_port,quote(req->path,9999),
+			req->hostname,tcp_port,quote((unsigned char*)req->path,9999),
 			(int64_t)req->lbody);
     mkcors(req);
     req->lres += strftime(req->hres+req->lres,80,

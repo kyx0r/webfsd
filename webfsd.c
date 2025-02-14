@@ -12,7 +12,6 @@
 #include <sys/time.h>
 #include <sys/types.h>
 #include <sys/wait.h>
-#include <sys/signal.h>
 #include <sys/utsname.h>
 #include <sys/socket.h>
 #include <sys/un.h>
@@ -377,7 +376,7 @@ mainloop(void *thread_arg)
 
     struct REQUEST      *req,*prev,*tmp;
     struct timeval      tv;
-    int                 max,length;
+    unsigned int                 max,length;
     fd_set              rd,wr;
 
     for (;!termsig;) {

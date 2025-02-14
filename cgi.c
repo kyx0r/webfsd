@@ -78,8 +78,9 @@ cgi_request(struct REQUEST *req)
     struct sockaddr_storage addr;
     struct strlist *env = NULL, *item;
     char host[65],serv[9];
-    char filename[1024], *h, *argv[2], envname[128];
-    int pid,p[2],i,length;
+    char filename[MAX_PATH+1], *h, *argv[2], envname[128];
+    int pid,p[2],i;
+    unsigned int length;
 
     if (debug)
 	fprintf(stderr,"%03d: is cgi request\n",req->fd);
@@ -168,7 +169,7 @@ cgi_request(struct REQUEST *req)
 	env_add(&env,"PATH_INFO","");
     }
     env_add(&env,"SCRIPT_NAME",req->path);
-    snprintf(filename,sizeof(filename)-1,"%s%s",doc_root,req->path);
+    snprintf(filename,sizeof(filename),"%s%s",doc_root,req->path);
     env_add(&env,"SCRIPT_FILENAME",filename);
 
     /* start cgi app */
