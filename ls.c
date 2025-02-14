@@ -18,7 +18,6 @@
 #include "httpd.h"
 
 #define LS_ALLOC_SIZE (4 * 4096)
-#define HOMEPAGE "http://bytesex.org/webfs.html"
 
 #ifdef USE_THREADS
 static pthread_mutex_t lock_dircache = PTHREAD_MUTEX_INITIALIZER;
@@ -375,9 +374,9 @@ ls(time_t now, char *hostname, char *filename, char *path, int *length)
     strftime(line,32,"%d/%b/%Y %H:%M:%S GMT",gmtime(&now));
     len += sprintf(buf+len,
 		   "</pre><hr noshade size=1>\n"
-		   "<small><a href=\"%s\">%s</a> &nbsp; %s</small>\n"
+		   "<small>%s</small>\n"
 		   "</body>\n",
-		   HOMEPAGE,server_name,line);
+		   line);
     for (i = 0; i < count; i++)
 	free(files[i]);
     if (count)
