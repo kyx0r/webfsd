@@ -257,7 +257,7 @@ static char *ls(time_t now, char *hostname, char *filename, char *path, int *len
 				"<title>%s:%d%s</title>"
 				"<meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\" />"
 				"</head>\n"
-				"<body bgcolor=white text=black link=darkblue vlink=firebrick alink=red>\n"
+				"<body bgcolor=#000000 text=#ffffff link=#0066ff vlink=#00ccff alink=#cc00ff>\n"
 				"<h1>listing: \n",
 				hostname,tcp_port,path);
 
