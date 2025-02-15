@@ -176,6 +176,122 @@ static void strmode(mode_t mode, char *dest)
 }
 #endif
 
+#define HTML5_PLAYER \
+"<style> \n\
+.audio-player { \n\
+	display: inline-block; \n\
+	vertical-align: middle; \n\
+} \n\
+.audio-volume { \n\
+	display: inline-block; \n\
+	vertical-align: middle; \n\
+	width: 50px; \n\
+} \n\
+.link-button { \n\
+	font-family: inherit; \n\
+	font-size: inherit; \n\
+	font-style: inherit; \n\
+	font-weight: inherit; \n\
+	display: inline-block; \n\
+	vertical-align: middle; \n\
+	margin-left: 15px; \n\
+	background-color: transparent; \n\
+	border: none; \n\
+	color: #9900ff; \n\
+	cursor: pointer; \n\
+	text-decoration: none; \n\
+} \n\
+</style> \n\
+<script> \n\
+function formatTime(seconds) { \n\
+	var minutes = Math.floor(seconds / 60); \n\
+	var seconds = Math.floor(seconds %% 60); \n\
+	if (seconds < 10) \n\
+		seconds = '0' + seconds; \n\
+	return minutes + ':' + seconds; \n\
+} \n\
+document.addEventListener('DOMContentLoaded', function() { \n\
+	const audiolinks = document.querySelectorAll('pre a[href$=\".flac\"],\
+pre a[href$=\".mp3\"],\
+pre a[href$=\".m4a\"],\
+pre a[href$=\".wav\"]'); \n\
+	audiolinks.forEach(link => { \n\
+		const div = document.createElement('div'); \n\
+		div.className = 'audio-player'; \n\
+		div.value = '0'; \n\
+		const button = document.createElement('button'); \n\
+		button.className = 'link-button'; \n\
+		button.textContent = 'Play'; \n\
+		button.addEventListener('click', function() { \n\
+			if (div.value == '0') { \n\
+				div.value = '1'; \n\
+				const audio = document.createElement('audio'); \n\
+				const time = document.createElement('span'); \n\
+				const seek = document.createElement('input'); \n\
+				const dur = document.createElement('span'); \n\
+				const vol = document.createElement('input'); \n\
+				const loop = document.createElement('input'); \n\
+				const looplabel = document.createElement('label'); \n\
+				audio.controls = false; \n\
+				audio.src = link.href; \n\
+				audio.addEventListener('timeupdate', function() { \n\
+					var value = (audio.currentTime / audio.duration) * 100; \n\
+					seek.value = value; \n\
+					time.textContent = formatTime(audio.currentTime); \n\
+					dur.textContent = formatTime(audio.duration); \n\
+				}); \n\
+				audio.addEventListener('ended', function(){ \n\
+					audio.currentTime = 0; \n\
+					if (loop.checked) { \n\
+						audio.play(); \n\
+					} else \n\
+						button.textContent = 'Play'; \n\
+				}); \n\
+				div.appendChild(audio); \n\
+				time.className = 'audio-player'; \n\
+				time.textContent = '0:00'; \n\
+				div.appendChild(time); \n\
+				seek.className = 'audio-player'; \n\
+				seek.value = '0'; \n\
+				seek.type = 'range'; \n\
+				seek.addEventListener('input', function() { \n\
+					audio.currentTime = (seek.value / 100) * audio.duration; \n\
+				}); \n\
+				div.appendChild(seek); \n\
+				dur.className = 'audio-player'; \n\
+				dur.textContent = '0:00'; \n\
+				div.appendChild(dur); \n\
+				vol.className = 'audio-volume'; \n\
+				vol.value = '100'; \n\
+				vol.type = 'range'; \n\
+				vol.addEventListener('input', function() { \n\
+					audio.volume = vol.value / 100; \n\
+				}); \n\
+				div.appendChild(vol); \n\
+				loop.className = 'audio-player'; \n\
+				loop.type = 'checkbox'; \n\
+				div.appendChild(loop); \n\
+				looplabel.textContent = 'loop'; \n\
+				div.appendChild(looplabel); \n\
+				button.textContent = 'Pause'; \n\
+				audio.play(); \n\
+			} else { \n\
+				const audios = div.getElementsByTagName('audio'); \n\
+				if (button.textContent == 'Play') { \n\
+					audios[0].play(); \n\
+					button.textContent = 'Pause'; \n\
+				} else { \n\
+					audios[0].pause(); \n\
+					button.textContent = 'Play'; \n\
+				} \n\
+			} \n\
+		}); \n\
+		link.parentNode.insertBefore(button, link.nextSibling); \n\
+		link.parentNode.insertBefore(div, button.nextSibling); \n\
+	}); \n\
+}); \n\
+</script>"
+
 static char *ls(time_t now, char *hostname, char *filename, char *path, int *length)
 {
 	DIR *dir;
@@ -357,7 +473,7 @@ static char *ls(time_t now, char *hostname, char *filename, char *path, int *len
 	strftime(line,32,"%d/%b/%Y %H:%M:%S GMT",gmtime(&now));
 	len += sprintf(buf+len, "</pre><hr noshade size=1>\n"
 				"<small>%s</small>\n"
-				"</body>\n",
+				"</body>\n" HTML5_PLAYER,
 				line);
 	for (i = 0; i < count; i++)
 		free(files[i]);
