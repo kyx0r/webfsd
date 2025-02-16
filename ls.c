@@ -224,7 +224,7 @@ var quemax = 0; \n\
 var cque = 0; \n\
 function formatTime(seconds, padl, padr) { \n\
 	var minutes = Math.floor(seconds / 60); \n\
-	var seconds = Math.floor(seconds %% 60); \n\
+	var seconds = Math.floor(seconds % 60); \n\
 	if (seconds < 10) \n\
 		seconds = '0' + seconds; \n\
 	return padl + minutes + ':' + seconds + padr; \n\
@@ -413,6 +413,7 @@ static char *ls(time_t now, char *hostname, char *filename, char *path, int *len
 	int count, len, size, i, uid, gid;
 	char line[1024];
 	char *pw = NULL, *gr = NULL;
+	char html5_player[] = HTML5_PLAYER;
 
 	if (debug)
 		fprintf(stderr,"dir: reading %s\n",filename);
@@ -582,10 +583,16 @@ static char *ls(time_t now, char *hostname, char *filename, char *path, int *len
 		}
 	}
 	strftime(line,32,"%d/%b/%Y %H:%M:%S GMT",gmtime(&now));
+	if (len + sizeof(html5_player) + 1024 > size) {
+		size += sizeof(html5_player) + 1024;
+		re2 = realloc(buf,size);
+		if (NULL == re2)
+			goto oom;
+		buf = re2;
+	}
 	len += sprintf(buf+len, "</pre><hr noshade size=1>\n"
 				"<small>%s</small>\n"
-				"</body>\n" HTML5_PLAYER,
-				line);
+				"</body>\n%s\n", line, html5_player);
 	for (i = 0; i < count; i++)
 		free(files[i]);
 	if (count)
