@@ -245,6 +245,7 @@ var queuebtn = []; \n\
 var queuepbtn = []; \n\
 var quemax = 0; \n\
 var cque = 0; \n\
+var cquemov = 0; \n\
 var pidx = 0; \n\
 var paused = []; \n\
 var gvol = 100; \n\
@@ -307,7 +308,7 @@ pre a[href$=\".wav\"]'); \n\
 		prevbutton.className = 'link-qbutton-alt'; \n\
 		prevbutton.textContent = '<<'; \n\
 		prevbutton.addEventListener('click', function() { \n\
-			if (!quemax || cque - 1 < 0) \n\
+			if (cquemov || !quemax || cque - 1 < 0) \n\
 				return; \n\
 			const pbuttons = document.getElementsByClassName('link-pbutton'); \n\
 			for (var i = 0; i < pbuttons.length; i++) \n\
@@ -317,8 +318,10 @@ pre a[href$=\".wav\"]'); \n\
 			const audio = div.getElementsByTagName('audio')[0]; \n\
 			if (audio) \n\
 				audio.currentTime = 0; \n\
-			if (queuepbtn[cque - 1].textContent == 'Play') \n\
-				queuepbtn[--cque].click(); \n\
+			if (queuepbtn[cque - 1].textContent == 'Play') { \n\
+				queuepbtn[cque - 1].click(); \n\
+				cquemov = -1; \n\
+			} \n\
 		}); \n\
 		head2.appendChild(prevbutton); \n\
 		currbutton = document.createElement('button'); \n\
@@ -335,7 +338,7 @@ pre a[href$=\".wav\"]'); \n\
 		nextbutton.className = 'link-qbutton-alt'; \n\
 		nextbutton.textContent = '>>'; \n\
 		nextbutton.addEventListener('click', function() { \n\
-			if (cque >= quemax) \n\
+			if (cquemov || cque >= quemax) \n\
 				return; \n\
 			const pbuttons = document.getElementsByClassName('link-pbutton'); \n\
 			for (var i = 0; i < pbuttons.length; i++) \n\
@@ -345,8 +348,10 @@ pre a[href$=\".wav\"]'); \n\
 			const audio = div.getElementsByTagName('audio')[0]; \n\
 			if (audio) \n\
 				audio.currentTime = 0; \n\
-			if (queuepbtn[cque + 1].textContent == 'Play') \n\
-				queuepbtn[++cque].click(); \n\
+			if (queuepbtn[cque + 1].textContent == 'Play') { \n\
+				queuepbtn[cque + 1].click(); \n\
+				cquemov = 1; \n\
+			} \n\
 		}); \n\
 		head2.appendChild(nextbutton); \n\
 		const qallbutton = document.createElement('button'); \n\
@@ -453,7 +458,7 @@ pre a[href$=\".wav\"]'); \n\
 						} else \n\
 							cque = 0;\n\
 						currbutton.textContent = '[' + cque + ']'; \n\
-						if (--act == 0) \n\
+						if (--act <= 0) \n\
 							pallbutton.textContent = 'Play'; \n\
 						else \n\
 							pallbutton.textContent = 'Pause'; \n\
@@ -467,7 +472,8 @@ pre a[href$=\".wav\"]'); \n\
 				seek.value = '0'; \n\
 				seek.type = 'range'; \n\
 				seek.addEventListener('input', function() { \n\
-					audio.currentTime = (seek.value / 100) * audio.duration; \n\
+					if (pbutton.textContent != 'Loading') \n\
+						audio.currentTime = (seek.value / 100) * audio.duration; \n\
 				}); \n\
 				div.appendChild(seek); \n\
 				dur.className = 'audio-player'; \n\
@@ -487,12 +493,19 @@ pre a[href$=\".wav\"]'); \n\
 				looplabel.className = 'audio-player'; \n\
 				looplabel.textContent = 'Loop'; \n\
 				div.appendChild(looplabel); \n\
-				pbutton.textContent = 'Pause'; \n\
-				act++; \n\
-				currbutton.textContent = '[' + cque + ']'; \n\
-				pallbutton.textContent = 'Pause'; \n\
-				audio.play(); \n\
 				div.value = '1'; \n\
+				pbutton.textContent = 'Loading'; \n\
+				const playpromise = audio.play(); \n\
+				audio.onplaying = function() { \n\
+					playpromise.then(_ => { \n\
+						pbutton.textContent = 'Pause'; \n\
+						act++; \n\
+						cque += cquemov; \n\
+						cquemov = 0; \n\
+						currbutton.textContent = '[' + cque + ']'; \n\
+						pallbutton.textContent = 'Pause'; \n\
+					}) \n\
+				}; \n\
 			} else { \n\
 				const audios = div.getElementsByTagName('audio'); \n\
 				if (audios[0].paused) { \n\
@@ -502,6 +515,8 @@ pre a[href$=\".wav\"]'); \n\
 						playpromise.then(_ => { \n\
 							pbutton.textContent = 'Pause'; \n\
 							act++; \n\
+							cque += cquemov; \n\
+							cquemov = 0; \n\
 							currbutton.textContent = '[' + cque + ']'; \n\
 							pallbutton.textContent = 'Pause'; \n\
 						}) \n\
@@ -510,7 +525,7 @@ pre a[href$=\".wav\"]'); \n\
 					audios[0].pause(); \n\
 					pbutton.textContent = 'Play'; \n\
 					currbutton.textContent = '[' + cque + ']'; \n\
-					if (--act == 0) \n\
+					if (--act <= 0) \n\
 						pallbutton.textContent = 'Play'; \n\
 					else \n\
 						pallbutton.textContent = 'Pause'; \n\
