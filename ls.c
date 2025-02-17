@@ -178,14 +178,29 @@ static void strmode(mode_t mode, char *dest)
 
 #define HTML5_PLAYER \
 "<style> \n\
+h1 { \n\
+	margin-bottom: 0; \n\
+} \n\
+h2 { \n\
+	margin: 0; \n\
+} \n\
 .audio-player { \n\
 	display: inline-block; \n\
 	vertical-align: middle; \n\
+	margin: 0; \n\
+	margin-right: 1em; \n\
+} \n\
+.gvolume { \n\
+	font-family: monospace; \n\
+	vertical-align: middle; \n\
+	margin: 0; \n\
 } \n\
 .audio-volume { \n\
 	display: inline-block; \n\
 	vertical-align: middle; \n\
-	width: 50px; \n\
+	width: 5em; \n\
+	margin: 0; \n\
+	margin-right: 1em; \n\
 } \n\
 .link-pbutton { \n\
 	font-family: inherit; \n\
@@ -194,14 +209,18 @@ static void strmode(mode_t mode, char *dest)
 	font-weight: inherit; \n\
 	display: inline-block; \n\
 	vertical-align: middle; \n\
-	margin-left: 15px; \n\
+	margin-left: 1em; \n\
+	padding-right: 1em; \n\
+	padding-left: 0; \n\
+	padding-top: 0; \n\
+	padding-bottom: 0; \n\
 	background-color: transparent; \n\
 	border: none; \n\
 	color: #9900ff; \n\
 	cursor: pointer; \n\
 	text-decoration: none; \n\
 } \n\
-.link-qbutton { \n\
+.link-qbutton, .link-qbutton-alt { \n\
 	font-family: inherit; \n\
 	font-size: inherit; \n\
 	font-style: inherit; \n\
@@ -212,6 +231,10 @@ static void strmode(mode_t mode, char *dest)
 	border: none; \n\
 	color: #9900ff; \n\
 	cursor: pointer; \n\
+	padding-right: 1em; \n\
+	padding-left: 0; \n\
+	padding-top: 0; \n\
+	padding-bottom: 0; \n\
 	text-decoration: none; \n\
 } \n\
 </style> \n\
@@ -222,12 +245,16 @@ var queuebtn = []; \n\
 var queuepbtn = []; \n\
 var quemax = 0; \n\
 var cque = 0; \n\
-function formatTime(seconds, padl, padr) { \n\
+var pidx = 0; \n\
+var paused = []; \n\
+var gvol = 100; \n\
+var act = 0; \n\
+function formatTime(seconds) { \n\
 	var minutes = Math.floor(seconds / 60); \n\
 	var seconds = Math.floor(seconds % 60); \n\
 	if (seconds < 10) \n\
 		seconds = '0' + seconds; \n\
-	return padl + minutes + ':' + seconds + padr; \n\
+	return minutes + ':' + seconds; \n\
 } \n\
 function shuffleArray(array) { \n\
 	for (var i = array.length - 1; i >= 0; i--) { \n\
@@ -238,6 +265,8 @@ function shuffleArray(array) { \n\
 	} \n\
 } \n\
 document.addEventListener('DOMContentLoaded', function() { \n\
+	var pallbutton; \n\
+	var currbutton; \n\
 	const audiolinks = document.querySelectorAll('pre a[href$=\".flac\"],\
 pre a[href$=\".mp3\"],\
 pre a[href$=\".m4a\"],\
@@ -245,9 +274,83 @@ pre a[href$=\".opus\"],\
 pre a[href$=\".ogg\"],\
 pre a[href$=\".wav\"]'); \n\
 	if (audiolinks.length > 0) { \n\
-		const head = document.getElementsByTagName('h1'); \n\
+		const head1 = document.getElementsByTagName('hr')[0]; \n\
+		const head2 = document.createElement('h2'); \n\
+		head1.parentNode.insertBefore(head2, head1.nextSibling); \n\
+		pallbutton = document.createElement('button'); \n\
+		pallbutton.className = 'link-qbutton-alt'; \n\
+		pallbutton.textContent = 'Play'; \n\
+		pallbutton.addEventListener('click', function() { \n\
+			const pbuttons = document.getElementsByClassName('link-pbutton'); \n\
+			var idx = 0; \n\
+			for (var i = 0; i < pbuttons.length; i++) \n\
+				if (pbuttons[i].textContent == 'Pause') { \n\
+					pbuttons[i].click(); \n\
+					paused[pidx++] = pbuttons[i]; \n\
+					idx = 1; \n\
+				} \n\
+			if (!idx) { \n\
+				for (var i = pidx-1; i >= 0; i--) \n\
+					if (paused[i].textContent == 'Play') { \n\
+						paused[i].click(); \n\
+						idx = 1; \n\
+						break; \n\
+					} \n\
+				pidx = 0; \n\
+				if (!idx && quemax) { \n\
+					queuepbtn[0].click(); \n\
+				} \n\
+			} \n\
+		}); \n\
+		head2.appendChild(pallbutton); \n\
+		const prevbutton = document.createElement('button'); \n\
+		prevbutton.className = 'link-qbutton-alt'; \n\
+		prevbutton.textContent = '<<'; \n\
+		prevbutton.addEventListener('click', function() { \n\
+			if (!quemax || cque - 1 < 0) \n\
+				return; \n\
+			const pbuttons = document.getElementsByClassName('link-pbutton'); \n\
+			for (var i = 0; i < pbuttons.length; i++) \n\
+				if (pbuttons[i].textContent == 'Pause') \n\
+					pbuttons[i].click(); \n\
+			const div = queue[cque]; \n\
+			const audio = div.getElementsByTagName('audio')[0]; \n\
+			if (audio) \n\
+				audio.currentTime = 0; \n\
+			if (queuepbtn[cque - 1].textContent == 'Play') \n\
+				queuepbtn[--cque].click(); \n\
+		}); \n\
+		head2.appendChild(prevbutton); \n\
+		currbutton = document.createElement('button'); \n\
+		currbutton.className = 'link-qbutton-alt'; \n\
+		currbutton.textContent = '[]'; \n\
+		currbutton.addEventListener('click', function() { \n\
+			if (!quemax) \n\
+				return; \n\
+			const div = queue[cque]; \n\
+			div.scrollIntoView(true); \n\
+		}); \n\
+		head2.appendChild(currbutton); \n\
+		const nextbutton = document.createElement('button'); \n\
+		nextbutton.className = 'link-qbutton-alt'; \n\
+		nextbutton.textContent = '>>'; \n\
+		nextbutton.addEventListener('click', function() { \n\
+			if (cque >= quemax) \n\
+				return; \n\
+			const pbuttons = document.getElementsByClassName('link-pbutton'); \n\
+			for (var i = 0; i < pbuttons.length; i++) \n\
+				if (pbuttons[i].textContent == 'Pause') \n\
+					pbuttons[i].click(); \n\
+			const div = queue[cque > 0 ? cque - 1 : cque]; \n\
+			const audio = div.getElementsByTagName('audio')[0]; \n\
+			if (audio) \n\
+				audio.currentTime = 0; \n\
+			if (queuepbtn[cque + 1].textContent == 'Play') \n\
+				queuepbtn[++cque].click(); \n\
+		}); \n\
+		head2.appendChild(nextbutton); \n\
 		const qallbutton = document.createElement('button'); \n\
-		qallbutton.className = 'link-pbutton'; \n\
+		qallbutton.className = 'link-qbutton-alt'; \n\
 		qallbutton.textContent = 'Enqueue'; \n\
 		qallbutton.addEventListener('click', function() { \n\
 			cque = 0; \n\
@@ -255,9 +358,9 @@ pre a[href$=\".wav\"]'); \n\
 			for (var i = 0; i < qbuttons.length; i++) \n\
 				qbuttons[i].click(); \n\
 		}); \n\
-		head[0].appendChild(qallbutton); \n\
+		head2.appendChild(qallbutton); \n\
 		const qdelbutton = document.createElement('button'); \n\
-		qdelbutton.className = 'link-pbutton'; \n\
+		qdelbutton.className = 'link-qbutton-alt'; \n\
 		qdelbutton.textContent = 'Dequeue'; \n\
 		qdelbutton.addEventListener('click', function() { \n\
 			cque = 0; \n\
@@ -265,9 +368,9 @@ pre a[href$=\".wav\"]'); \n\
 				queuebtn[i].textContent = 'Enqueue'; \n\
 			quemax = 0; \n\
 		}); \n\
-		head[0].appendChild(qdelbutton); \n\
+		head2.appendChild(qdelbutton); \n\
 		const qrandbutton = document.createElement('button'); \n\
-		qrandbutton.className = 'link-pbutton'; \n\
+		qrandbutton.className = 'link-qbutton-alt'; \n\
 		qrandbutton.textContent = 'Randqueue'; \n\
 		qrandbutton.addEventListener('click', function() { \n\
 			cque = 0; \n\
@@ -287,7 +390,31 @@ pre a[href$=\".wav\"]'); \n\
 				queuebtn[i].textContent = 'Dequeue[' + i + ']'; \n\
 			} \n\
 		}); \n\
-		head[0].appendChild(qrandbutton); \n\
+		head2.appendChild(qrandbutton); \n\
+		const gvolrange = document.createElement('input'); \n\
+		gvolrange.className = 'gvolume'; \n\
+		gvolrange.value = '100'; \n\
+		gvolrange.type = 'range'; \n\
+		gvolrange.addEventListener('input', function() { \n\
+			gvol = gvolrange.value; \n\
+			const vols = document.getElementsByClassName('audio-volume'); \n\
+			for (var i = 0; i < vols.length; i++) { \n\
+				vols[i].value = gvol; \n\
+				const event = new Event('input'); \n\
+				vols[i].dispatchEvent(event); \n\
+			} \n\
+		}); \n\
+		const hr1 = document.createElement('hr'); \n\
+		const hr2 = document.createElement('hr'); \n\
+		hr1.size = 1;\n\
+		hr2.size = 1;\n\
+		const desc = document.createElement('span'); \n\
+		desc.className = 'gvolume'; \n\
+		desc.textContent = 'Volume '; \n\
+		head2.parentNode.insertBefore(hr1, head2.nextSibling); \n\
+		head2.parentNode.insertBefore(desc, hr1.nextSibling); \n\
+		head2.parentNode.insertBefore(gvolrange, desc.nextSibling); \n\
+		head2.parentNode.insertBefore(hr2, gvolrange.nextSibling); \n\
 	} \n\
 	audiolinks.forEach(link => { \n\
 		const div = document.createElement('div'); \n\
@@ -310,8 +437,8 @@ pre a[href$=\".wav\"]'); \n\
 				audio.addEventListener('timeupdate', function() { \n\
 					var value = (audio.currentTime / audio.duration) * 100; \n\
 					seek.value = value; \n\
-					time.textContent = formatTime(audio.currentTime, ' ', ' '); \n\
-					dur.textContent = formatTime(audio.duration, ' ', ' '); \n\
+					time.textContent = formatTime(audio.currentTime); \n\
+					dur.textContent = formatTime(audio.duration); \n\
 				}); \n\
 				audio.addEventListener('ended', function(){ \n\
 					audio.currentTime = 0; \n\
@@ -325,11 +452,16 @@ pre a[href$=\".wav\"]'); \n\
 							queuepbtn[cque++].click(); \n\
 						} else \n\
 							cque = 0;\n\
+						currbutton.textContent = '[' + cque + ']'; \n\
+						if (--act == 0) \n\
+							pallbutton.textContent = 'Play'; \n\
+						else \n\
+							pallbutton.textContent = 'Pause'; \n\
 					} \n\
 				}); \n\
 				div.appendChild(audio); \n\
 				time.className = 'audio-player'; \n\
-				time.textContent = ' 0:00 '; \n\
+				time.textContent = '0:00'; \n\
 				div.appendChild(time); \n\
 				seek.className = 'audio-player'; \n\
 				seek.value = '0'; \n\
@@ -339,11 +471,12 @@ pre a[href$=\".wav\"]'); \n\
 				}); \n\
 				div.appendChild(seek); \n\
 				dur.className = 'audio-player'; \n\
-				dur.textContent = ' 0:00 '; \n\
+				dur.textContent = '0:00'; \n\
 				div.appendChild(dur); \n\
 				vol.className = 'audio-volume'; \n\
-				vol.value = '100'; \n\
+				vol.value = gvol; \n\
 				vol.type = 'range'; \n\
+				audio.volume = vol.value / 100; \n\
 				vol.addEventListener('input', function() { \n\
 					audio.volume = vol.value / 100; \n\
 				}); \n\
@@ -355,16 +488,32 @@ pre a[href$=\".wav\"]'); \n\
 				looplabel.textContent = 'Loop'; \n\
 				div.appendChild(looplabel); \n\
 				pbutton.textContent = 'Pause'; \n\
+				act++; \n\
+				currbutton.textContent = '[' + cque + ']'; \n\
+				pallbutton.textContent = 'Pause'; \n\
 				audio.play(); \n\
 				div.value = '1'; \n\
 			} else { \n\
 				const audios = div.getElementsByTagName('audio'); \n\
-				if (pbutton.textContent == 'Play') { \n\
-					audios[0].play(); \n\
-					pbutton.textContent = 'Pause'; \n\
-				} else { \n\
+				if (audios[0].paused) { \n\
+					pbutton.textContent = 'Loading'; \n\
+					const playpromise = audios[0].play(); \n\
+					audios[0].onplaying = function() { \n\
+						playpromise.then(_ => { \n\
+							pbutton.textContent = 'Pause'; \n\
+							act++; \n\
+							currbutton.textContent = '[' + cque + ']'; \n\
+							pallbutton.textContent = 'Pause'; \n\
+						}) \n\
+					}; \n\
+				} else if (pbutton.textContent == 'Pause') { \n\
 					audios[0].pause(); \n\
 					pbutton.textContent = 'Play'; \n\
+					currbutton.textContent = '[' + cque + ']'; \n\
+					if (--act == 0) \n\
+						pallbutton.textContent = 'Play'; \n\
+					else \n\
+						pallbutton.textContent = 'Pause'; \n\
 				} \n\
 			} \n\
 		}); \n\
@@ -512,7 +661,7 @@ static char *ls(time_t now, char *hostname, char *filename, char *path, int *len
 		h2++;
 	}
 
-	len += sprintf(buf+len, "</h1><hr noshade size=1><pre>\n"
+	len += sprintf(buf+len, "</h1><hr size=1><pre>\n"
 				"<b>access      user      group     date             "
 				"size  name</b>\n\n");
 
@@ -590,7 +739,7 @@ static char *ls(time_t now, char *hostname, char *filename, char *path, int *len
 			goto oom;
 		buf = re2;
 	}
-	len += sprintf(buf+len, "</pre><hr noshade size=1>\n"
+	len += sprintf(buf+len, "</pre><hr size=1>\n"
 				"<small>%s</small>\n"
 				"</body>\n%s\n", line, html5_player);
 	for (i = 0; i < count; i++)
