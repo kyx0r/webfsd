@@ -194,6 +194,7 @@ h2 { \n\
 	font-family: monospace; \n\
 	vertical-align: middle; \n\
 	margin: 0; \n\
+	margin-right: 1em; \n\
 } \n\
 .audio-volume { \n\
 	display: inline-block; \n\
@@ -210,10 +211,8 @@ h2 { \n\
 	display: inline-block; \n\
 	vertical-align: middle; \n\
 	margin-left: 1em; \n\
-	padding-right: 1em; \n\
-	padding-left: 0; \n\
-	padding-top: 0; \n\
-	padding-bottom: 0; \n\
+	margin-right: 1em; \n\
+	padding: 0; \n\
 	background-color: transparent; \n\
 	border: none; \n\
 	color: #9900ff; \n\
@@ -231,10 +230,8 @@ h2 { \n\
 	border: none; \n\
 	color: #9900ff; \n\
 	cursor: pointer; \n\
-	padding-right: 1em; \n\
-	padding-left: 0; \n\
-	padding-top: 0; \n\
-	padding-bottom: 0; \n\
+	margin-right: 1em; \n\
+	padding: 0; \n\
 	text-decoration: none; \n\
 } \n\
 </style> \n\
@@ -248,8 +245,7 @@ var cque = 0; \n\
 var cquemov = 0; \n\
 var pidx = 0; \n\
 var paused = []; \n\
-var gvol = 100; \n\
-var act = 0; \n\
+var gvol; \n\
 function formatTime(seconds) { \n\
 	var minutes = Math.floor(seconds / 60); \n\
 	var seconds = Math.floor(seconds % 60); \n\
@@ -266,8 +262,7 @@ function shuffleArray(array) { \n\
 	} \n\
 } \n\
 document.addEventListener('DOMContentLoaded', function() { \n\
-	var pallbutton; \n\
-	var currbutton; \n\
+	var pallbutton, currbutton, ctrack; \n\
 	const audiolinks = document.querySelectorAll('pre a[href$=\".flac\"],\
 pre a[href$=\".mp3\"],\
 pre a[href$=\".m4a\"],\
@@ -298,10 +293,10 @@ pre a[href$=\".wav\"]'); \n\
 						break; \n\
 					} \n\
 				pidx = 0; \n\
-				if (!idx && quemax) { \n\
-					queuepbtn[0].click(); \n\
-				} \n\
-			} \n\
+				if (!idx && quemax) \n\
+					queuepbtn[cque].click(); \n\
+			} else \n\
+				pallbutton.textContent = 'Play'; \n\
 		}); \n\
 		head2.appendChild(pallbutton); \n\
 		const prevbutton = document.createElement('button'); \n\
@@ -310,23 +305,32 @@ pre a[href$=\".wav\"]'); \n\
 		prevbutton.addEventListener('click', function() { \n\
 			if (cquemov || !quemax || cque - 1 < 0) \n\
 				return; \n\
-			const pbuttons = document.getElementsByClassName('link-pbutton'); \n\
-			for (var i = 0; i < pbuttons.length; i++) \n\
-				if (pbuttons[i].textContent == 'Pause') \n\
-					pbuttons[i].click(); \n\
-			const div = queue[cque]; \n\
-			const audio = div.getElementsByTagName('audio')[0]; \n\
-			if (audio) \n\
-				audio.currentTime = 0; \n\
-			if (queuepbtn[cque - 1].textContent == 'Play') { \n\
-				queuepbtn[cque - 1].click(); \n\
-				cquemov = -1; \n\
+			if (pallbutton.textContent == 'Pause') { \n\
+				const pbuttons = document.getElementsByClassName('link-pbutton'); \n\
+				for (var i = 0; i < pbuttons.length; i++) \n\
+					if (pbuttons[i].textContent == 'Pause') \n\
+						pbuttons[i].click(); \n\
+				const div = queue[cque]; \n\
+				div.innerHTML = ''; \n\
+				div.value = '0'; \n\
+				if (queuepbtn[cque - 1].textContent == 'Play') { \n\
+					queuepbtn[cque - 1].click(); \n\
+					cquemov = -1; \n\
+				} \n\
+			} else { \n\
+				const div = queue[cque]; \n\
+				div.innerHTML = ''; \n\
+				div.value = '0'; \n\
+				pidx = 0; \n\
+				cque--; \n\
+				currbutton.textContent = '[' + cque + ']'; \n\
+				ctrack.innerHTML = queuepbtn[cque].previousSibling.innerHTML; \n\
 			} \n\
 		}); \n\
 		head2.appendChild(prevbutton); \n\
 		currbutton = document.createElement('button'); \n\
 		currbutton.className = 'link-qbutton-alt'; \n\
-		currbutton.textContent = '[]'; \n\
+		currbutton.textContent = '[0]'; \n\
 		currbutton.addEventListener('click', function() { \n\
 			if (!quemax) \n\
 				return; \n\
@@ -338,19 +342,28 @@ pre a[href$=\".wav\"]'); \n\
 		nextbutton.className = 'link-qbutton-alt'; \n\
 		nextbutton.textContent = '>>'; \n\
 		nextbutton.addEventListener('click', function() { \n\
-			if (cquemov || cque >= quemax) \n\
+			if (cquemov || cque + 1 >= quemax) \n\
 				return; \n\
-			const pbuttons = document.getElementsByClassName('link-pbutton'); \n\
-			for (var i = 0; i < pbuttons.length; i++) \n\
-				if (pbuttons[i].textContent == 'Pause') \n\
-					pbuttons[i].click(); \n\
-			const div = queue[cque > 0 ? cque - 1 : cque]; \n\
-			const audio = div.getElementsByTagName('audio')[0]; \n\
-			if (audio) \n\
-				audio.currentTime = 0; \n\
-			if (queuepbtn[cque + 1].textContent == 'Play') { \n\
-				queuepbtn[cque + 1].click(); \n\
-				cquemov = 1; \n\
+			if (pallbutton.textContent == 'Pause') { \n\
+				const pbuttons = document.getElementsByClassName('link-pbutton'); \n\
+				for (var i = 0; i < pbuttons.length; i++) \n\
+					if (pbuttons[i].textContent == 'Pause') \n\
+						pbuttons[i].click(); \n\
+				const div = queue[cque]; \n\
+				div.innerHTML = ''; \n\
+				div.value = '0'; \n\
+				if (queuepbtn[cque + 1].textContent == 'Play') { \n\
+					queuepbtn[cque + 1].click(); \n\
+					cquemov = 1; \n\
+				} \n\
+			} else { \n\
+				const div = queue[cque]; \n\
+				div.innerHTML = ''; \n\
+				div.value = '0'; \n\
+				pidx = 0; \n\
+				cque++; \n\
+				currbutton.textContent = '[' + cque + ']'; \n\
+				ctrack.innerHTML = queuepbtn[cque].previousSibling.innerHTML; \n\
 			} \n\
 		}); \n\
 		head2.appendChild(nextbutton); \n\
@@ -398,10 +411,16 @@ pre a[href$=\".wav\"]'); \n\
 		head2.appendChild(qrandbutton); \n\
 		const gvolrange = document.createElement('input'); \n\
 		gvolrange.className = 'gvolume'; \n\
-		gvolrange.value = '100'; \n\
+		gvol = localStorage.getItem('volrange.value'); \n\
+		if (!gvol) { \n\
+			localStorage.setItem('volrange.value', '100'); \n\
+			gvol = '100'; \n\
+		} \n\
+		gvolrange.value = gvol; \n\
 		gvolrange.type = 'range'; \n\
 		gvolrange.addEventListener('input', function() { \n\
 			gvol = gvolrange.value; \n\
+			localStorage.setItem('volrange.value', gvol); \n\
 			const vols = document.getElementsByClassName('audio-volume'); \n\
 			for (var i = 0; i < vols.length; i++) { \n\
 				vols[i].value = gvol; \n\
@@ -415,11 +434,15 @@ pre a[href$=\".wav\"]'); \n\
 		hr2.size = 1;\n\
 		const desc = document.createElement('span'); \n\
 		desc.className = 'gvolume'; \n\
-		desc.textContent = 'Volume '; \n\
+		desc.textContent = 'Master'; \n\
+		ctrack = document.createElement('span'); \n\
+		ctrack.className = 'gvolume'; \n\
+		ctrack.textContent = 'Track'; \n\
 		head2.parentNode.insertBefore(hr1, head2.nextSibling); \n\
 		head2.parentNode.insertBefore(desc, hr1.nextSibling); \n\
 		head2.parentNode.insertBefore(gvolrange, desc.nextSibling); \n\
-		head2.parentNode.insertBefore(hr2, gvolrange.nextSibling); \n\
+		head2.parentNode.insertBefore(ctrack, gvolrange.nextSibling); \n\
+		head2.parentNode.insertBefore(hr2, ctrack.nextSibling); \n\
 	} \n\
 	audiolinks.forEach(link => { \n\
 		const div = document.createElement('div'); \n\
@@ -436,7 +459,7 @@ pre a[href$=\".wav\"]'); \n\
 				const dur = document.createElement('span'); \n\
 				const vol = document.createElement('input'); \n\
 				const loop = document.createElement('input'); \n\
-				const looplabel = document.createElement('label'); \n\
+				const looplabel = document.createElement('span'); \n\
 				audio.controls = false; \n\
 				audio.src = link.href; \n\
 				audio.addEventListener('timeupdate', function() { \n\
@@ -451,17 +474,12 @@ pre a[href$=\".wav\"]'); \n\
 						audio.play(); \n\
 					} else { \n\
 						pbutton.textContent = 'Play'; \n\
-						if (pbutton == queuepbtn[cque]) \n\
-							cque++; \n\
+						cque++; \n\
 						if (cque < quemax) { \n\
-							queuepbtn[cque++].click(); \n\
+							queuepbtn[cque].click(); \n\
 						} else \n\
 							cque = 0;\n\
 						currbutton.textContent = '[' + cque + ']'; \n\
-						if (--act <= 0) \n\
-							pallbutton.textContent = 'Play'; \n\
-						else \n\
-							pallbutton.textContent = 'Pause'; \n\
 					} \n\
 				}); \n\
 				div.appendChild(audio); \n\
@@ -489,6 +507,7 @@ pre a[href$=\".wav\"]'); \n\
 				div.appendChild(vol); \n\
 				loop.className = 'audio-player'; \n\
 				loop.type = 'checkbox'; \n\
+				loop.name = 'loop'; \n\
 				div.appendChild(loop); \n\
 				looplabel.className = 'audio-player'; \n\
 				looplabel.textContent = 'Loop'; \n\
@@ -498,8 +517,8 @@ pre a[href$=\".wav\"]'); \n\
 				const playpromise = audio.play(); \n\
 				audio.onplaying = function() { \n\
 					playpromise.then(_ => { \n\
+						ctrack.innerHTML = link.innerHTML; \n\
 						pbutton.textContent = 'Pause'; \n\
-						act++; \n\
 						cque += cquemov; \n\
 						cquemov = 0; \n\
 						currbutton.textContent = '[' + cque + ']'; \n\
@@ -513,8 +532,8 @@ pre a[href$=\".wav\"]'); \n\
 					const playpromise = audios[0].play(); \n\
 					audios[0].onplaying = function() { \n\
 						playpromise.then(_ => { \n\
+							ctrack.innerHTML = link.innerHTML; \n\
 							pbutton.textContent = 'Pause'; \n\
-							act++; \n\
 							cque += cquemov; \n\
 							cquemov = 0; \n\
 							currbutton.textContent = '[' + cque + ']'; \n\
@@ -525,10 +544,6 @@ pre a[href$=\".wav\"]'); \n\
 					audios[0].pause(); \n\
 					pbutton.textContent = 'Play'; \n\
 					currbutton.textContent = '[' + cque + ']'; \n\
-					if (--act <= 0) \n\
-						pallbutton.textContent = 'Play'; \n\
-					else \n\
-						pallbutton.textContent = 'Pause'; \n\
 				} \n\
 			} \n\
 		}); \n\
@@ -645,7 +660,9 @@ static char *ls(time_t now, char *hostname, char *filename, char *path, int *len
 		goto oom;
 	len  = 0;
 
-	len += sprintf(buf+len, "<head>"
+	len += sprintf(buf+len, "<!DOCTYPE html>"
+				"<html lang=\"en\">"
+				"<head>"
 				"<title>%s:%d%s</title>"
 				"<meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\" />"
 				"</head>\n"

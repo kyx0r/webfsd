@@ -30,7 +30,7 @@ endef
 
 # sendfile yes/no
 ifneq ($(USE_SENDFILE),yes)
-CFLAGS	+= -DNO_SENDFILE
+CFLAGS	+= -DSENDFILE
 endif
 
 # threads yes/no

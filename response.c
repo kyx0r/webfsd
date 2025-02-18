@@ -43,7 +43,7 @@ static inline size_t off_to_size(off_t off_bytes)
 	return off_bytes;
 }
 
-#if defined(__linux__) && !defined(NO_SENDFILE)
+#if defined(__linux__) && defined(SENDFILE)
 
 # include <sys/sendfile.h>
 static ssize_t xsendfile(int out, int in, off_t offset, off_t off_bytes)
@@ -52,7 +52,7 @@ static ssize_t xsendfile(int out, int in, off_t offset, off_t off_bytes)
 	return sendfile(out, in, &offset, bytes);
 }
 
-#elif defined(__FreeBSD__) && !defined(NO_SENDFILE)
+#elif defined(__FreeBSD__) && defined(SENDFILE)
 
 static ssize_t xsendfile(int out, int in, off_t offset, off_t off_bytes)
 {
