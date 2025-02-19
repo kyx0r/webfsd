@@ -27,6 +27,7 @@ static pthread_mutex_t lock_dircache = PTHREAD_MUTEX_INITIALIZER;
 
 #define CACHE_SIZE 32
 
+#ifdef PRINT_OWNER
 static char *xgetpwuid(uid_t uid)
 {
 	static char           *cache[CACHE_SIZE];
@@ -99,6 +100,7 @@ static char *xgetgrgid(gid_t gid)
 
 	return gr ? gr->gr_name : NULL;
 }
+#endif
 
 /* --------------------------------------------------------- */
 
@@ -203,36 +205,42 @@ h2 { \n\
 	margin: 0; \n\
 	margin-right: 1em; \n\
 } \n\
-.link-pbutton { \n\
+.link-pbutton, .link-qbutton-alt { \n\
 	font-family: inherit; \n\
 	font-size: inherit; \n\
 	font-style: inherit; \n\
 	font-weight: inherit; \n\
 	display: inline-block; \n\
 	vertical-align: middle; \n\
+	background-color: transparent; \n\
+	border: none; \n\
+	color: #9900ff; \n\
+	cursor: pointer; \n\
+	text-decoration: none; \n\
+	margin-right: 1em; \n\
+	padding: 0; \n\
+} \n\
+.link-qbutton { \n\
+	font-family: inherit; \n\
+	font-size: inherit; \n\
+	font-style: inherit; \n\
+	font-weight: inherit; \n\
+	display: inline-block; \n\
+	vertical-align: middle; \n\
+	background-color: transparent; \n\
+	border: none; \n\
+	color: #9900ff; \n\
+	cursor: pointer; \n\
+	text-decoration: none; \n\
 	margin-left: 1em; \n\
 	margin-right: 1em; \n\
 	padding: 0; \n\
-	background-color: transparent; \n\
-	border: none; \n\
-	color: #9900ff; \n\
-	cursor: pointer; \n\
-	text-decoration: none; \n\
 } \n\
-.link-qbutton, .link-qbutton-alt { \n\
-	font-family: inherit; \n\
-	font-size: inherit; \n\
-	font-style: inherit; \n\
-	font-weight: inherit; \n\
-	display: inline-block; \n\
-	vertical-align: middle; \n\
-	background-color: transparent; \n\
-	border: none; \n\
-	color: #9900ff; \n\
-	cursor: pointer; \n\
-	margin-right: 1em; \n\
-	padding: 0; \n\
-	text-decoration: none; \n\
+.sticky { \n\
+	position: sticky; \n\
+	top: 0; \n\
+	z-index: 1000; \n\
+	background-color: black; \n\
 } \n\
 </style> \n\
 </style> \n\
@@ -262,7 +270,7 @@ function shuffleArray(array) { \n\
 	} \n\
 } \n\
 document.addEventListener('DOMContentLoaded', function() { \n\
-	var pallbutton, currbutton, ctrack; \n\
+	var pallbutton, currbutton, ctrack, hparent; \n\
 	const audiolinks = document.querySelectorAll('pre a[href$=\".flac\"],\
 pre a[href$=\".mp3\"],\
 pre a[href$=\".m4a\"],\
@@ -271,6 +279,8 @@ pre a[href$=\".ogg\"],\
 pre a[href$=\".wav\"]'); \n\
 	if (audiolinks.length > 0) { \n\
 		const head1 = document.getElementsByTagName('hr')[0]; \n\
+		hparent = head1.parentNode; \n\
+		hparent.className = 'sticky'; \n\
 		const head2 = document.createElement('h2'); \n\
 		head1.parentNode.insertBefore(head2, head1.nextSibling); \n\
 		pallbutton = document.createElement('button'); \n\
@@ -324,7 +334,7 @@ pre a[href$=\".wav\"]'); \n\
 				pidx = 0; \n\
 				cque--; \n\
 				currbutton.textContent = '[' + cque + ']'; \n\
-				ctrack.innerHTML = queuepbtn[cque].previousSibling.innerHTML; \n\
+				ctrack.innerHTML = queuebtn[cque].previousSibling.innerHTML; \n\
 			} \n\
 		}); \n\
 		head2.appendChild(prevbutton); \n\
@@ -335,7 +345,10 @@ pre a[href$=\".wav\"]'); \n\
 			if (!quemax) \n\
 				return; \n\
 			const div = queue[cque]; \n\
-			div.scrollIntoView(true); \n\
+			const contentrect = div.getBoundingClientRect(); \n\
+			const hprect = hparent.getBoundingClientRect(); \n\
+			const scrollpos = window.scrollY + contentrect.top - (hprect.height + 10); \n\
+			window.scrollTo({ top: scrollpos }); \n\
 		}); \n\
 		head2.appendChild(currbutton); \n\
 		const nextbutton = document.createElement('button'); \n\
@@ -363,7 +376,7 @@ pre a[href$=\".wav\"]'); \n\
 				pidx = 0; \n\
 				cque++; \n\
 				currbutton.textContent = '[' + cque + ']'; \n\
-				ctrack.innerHTML = queuepbtn[cque].previousSibling.innerHTML; \n\
+				ctrack.innerHTML = queuebtn[cque].previousSibling.innerHTML; \n\
 			} \n\
 		}); \n\
 		head2.appendChild(nextbutton); \n\
@@ -474,9 +487,10 @@ pre a[href$=\".wav\"]'); \n\
 						audio.play(); \n\
 					} else { \n\
 						pbutton.textContent = 'Play'; \n\
-						cque++; \n\
-						if (cque < quemax) { \n\
-							queuepbtn[cque].click(); \n\
+						if (cque + 1 < quemax) { \n\
+							div.innerHTML = ''; \n\
+							div.value = '0'; \n\
+							queuepbtn[++cque].click(); \n\
 						} else \n\
 							cque = 0;\n\
 						currbutton.textContent = '[' + cque + ']'; \n\
@@ -575,9 +589,9 @@ pre a[href$=\".wav\"]'); \n\
 				} \n\
 			} \n\
 		}); \n\
-		link.parentNode.insertBefore(pbutton, link.nextSibling); \n\
-		link.parentNode.insertBefore(qbutton, pbutton.nextSibling); \n\
-		link.parentNode.insertBefore(div, qbutton.nextSibling); \n\
+		link.parentNode.insertBefore(qbutton, link.nextSibling); \n\
+		link.parentNode.insertBefore(pbutton, qbutton.nextSibling); \n\
+		link.parentNode.insertBefore(div, pbutton.nextSibling); \n\
 	}); \n\
 }); \n\
 </script>"
@@ -591,7 +605,9 @@ static char *ls(time_t now, char *hostname, char *filename, char *path, int *len
 	char *h1, *h2, *re2, *buf = NULL;
 	int count, len, size, i, uid, gid;
 	char line[1024];
+	#ifdef PRINT_OWNER
 	char *pw = NULL, *gr = NULL;
+	#endif
 	char html5_player[] = HTML5_PLAYER;
 
 	if (debug)
@@ -667,7 +683,7 @@ static char *ls(time_t now, char *hostname, char *filename, char *path, int *len
 				"<meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\" />"
 				"</head>\n"
 				"<body bgcolor=#000000 text=#ffffff link=#0066ff vlink=#00ccff alink=#cc00ff>\n"
-				"<h1>listing: \n",
+				"<div><h1>listing: \n",
 				hostname,tcp_port,path);
 
 	h1 = path, h2 = path+1;
@@ -693,8 +709,12 @@ static char *ls(time_t now, char *hostname, char *filename, char *path, int *len
 		h2++;
 	}
 
-	len += sprintf(buf+len, "</h1><hr size=1><pre>\n"
+	len += sprintf(buf+len, "</h1><hr size=1></div><pre>\n"
+				#ifdef PRINT_OWNER
 				"<b>access      user      group     date             "
+				#else
+				"<b>access      date             "
+				#endif
 				"size  name</b>\n\n");
 
 	for (i = 0; i < count; i++) {
@@ -715,6 +735,7 @@ static char *ls(time_t now, char *hostname, char *filename, char *path, int *len
 		buf[len++] = ' ';
 
 		/* user */
+		#ifdef PRINT_OWNER
 		pw = xgetpwuid(files[i]->s.st_uid);
 		if (NULL != pw)
 			len += sprintf(buf+len,"%-8.8s  ",pw);
@@ -727,6 +748,7 @@ static char *ls(time_t now, char *hostname, char *filename, char *path, int *len
 			len += sprintf(buf+len,"%-8.8s  ",gr);
 		else
 			len += sprintf(buf+len,"%8d  ",(int)files[i]->s.st_gid);
+		#endif
 
 		/* mtime */
 		if (now - files[i]->s.st_mtime > 60*60*24*30*6)
