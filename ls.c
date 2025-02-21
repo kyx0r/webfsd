@@ -198,12 +198,79 @@ h2 { \n\
 	margin: 0; \n\
 	margin-right: 1em; \n\
 } \n\
+.gvolume-seek { \n\
+	font-family: monospace; \n\
+	vertical-align: middle; \n\
+	width: 10em; \n\
+	margin: 0; \n\
+	margin-right: 1em; \n\
+	-webkit-appearance: none; \n\
+	background: #808080; \n\
+	outline: none; \n\
+	opacity: 0.7; \n\
+	-webkit-transition: .2s; \n\
+	transition: opacity .2s; \n\
+	height: 0.5em; \n\
+	border-style: solid; \n\
+	border-width: 1px; \n\
+	border-color: #d3d3d3; \n\
+} \n\
 .audio-volume { \n\
 	display: inline-block; \n\
 	vertical-align: middle; \n\
 	width: 5em; \n\
 	margin: 0; \n\
 	margin-right: 1em; \n\
+	-webkit-appearance: none; \n\
+	background: #808080; \n\
+	outline: none; \n\
+	opacity: 0.7; \n\
+	-webkit-transition: .2s; \n\
+	transition: opacity .2s; \n\
+	height: 0.5em; \n\
+	border-style: solid; \n\
+	border-width: 1px; \n\
+	border-color: #d3d3d3; \n\
+} \n\
+.audio-seek { \n\
+	display: inline-block; \n\
+	vertical-align: middle; \n\
+	width: 15em; \n\
+	margin: 0; \n\
+	margin-right: 1em; \n\
+	-webkit-appearance: none; \n\
+	background: #808080; \n\
+	outline: none; \n\
+	opacity: 0.7; \n\
+	-webkit-transition: .2s; \n\
+	transition: opacity .2s; \n\
+	height: 0.5em; \n\
+	border-style: solid; \n\
+	border-width: 1px; \n\
+	border-color: #d3d3d3; \n\
+} \n\
+.audio-volume:hover, .audio-seek:hover, .gvolume-seek:hover { \n\
+	opacity: 1; \n\
+} \n\
+.audio-volume::-webkit-slider-thumb, .audio-seek::-webkit-slider-thumb, .gvolume-seek::-webkit-slider-thumb { \n\
+	-webkit-appearance: none; \n\
+	appearance: none; \n\
+	width: 1em; \n\
+	height: 0.7em; \n\
+	cursor: pointer; \n\
+	background: #0066ff; \n\
+	border-style: solid; \n\
+	border-width: 1px; \n\
+	border-color: #00ccff; \n\
+} \n\
+.audio-volume::-moz-range-thumb, .audio-seek::-moz-range-thumb, .gvolume-seek::-moz-range-thumb{ \n\
+	width: 1em; \n\
+	height: 0.5em; \n\
+	cursor: pointer; \n\
+	background: #0066ff; \n\
+	border-style: solid; \n\
+	border-width: 1px; \n\
+	border-color: #00ccff; \n\
 } \n\
 .link-pbutton, .link-qbutton-alt { \n\
 	font-family: inherit; \n\
@@ -423,7 +490,7 @@ pre a[href$=\".wav\"]'); \n\
 		}); \n\
 		head2.appendChild(qrandbutton); \n\
 		const gvolrange = document.createElement('input'); \n\
-		gvolrange.className = 'gvolume'; \n\
+		gvolrange.className = 'gvolume-seek'; \n\
 		gvol = localStorage.getItem('volrange.value'); \n\
 		if (!gvol) { \n\
 			localStorage.setItem('volrange.value', '100'); \n\
@@ -500,7 +567,7 @@ pre a[href$=\".wav\"]'); \n\
 				time.className = 'audio-player'; \n\
 				time.textContent = '0:00'; \n\
 				div.appendChild(time); \n\
-				seek.className = 'audio-player'; \n\
+				seek.className = 'audio-seek'; \n\
 				seek.value = '0'; \n\
 				seek.type = 'range'; \n\
 				seek.addEventListener('input', function() { \n\
