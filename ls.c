@@ -180,11 +180,24 @@ static void strmode(mode_t mode, char *dest)
 
 #define HTML5_PLAYER \
 "<style> \n\
+a { \n\
+	text-decoration: none; \n\
+} \n\
 h1 { \n\
 	margin-bottom: 0; \n\
 } \n\
 h2 { \n\
 	margin: 0; \n\
+} \n\
+table, th, td { \n\
+	border:1px solid gray; \n\
+	border-collapse: collapse; \n\
+	padding: 1px; \n\
+	font-family: monospace; \n\
+	max-width: 30em; \n\
+	white-space: nowrap; \n\
+	overflow: hidden; \n\
+	text-overflow: ellipsis; \n\
 } \n\
 .audio-player { \n\
 	display: inline-block; \n\
@@ -272,7 +285,7 @@ h2 { \n\
 	border-width: 1px; \n\
 	border-color: #00ccff; \n\
 } \n\
-.link-pbutton, .link-qbutton-alt { \n\
+.link-pbutton, .link-qbutton, .link-qbutton-alt { \n\
 	font-family: inherit; \n\
 	font-size: inherit; \n\
 	font-style: inherit; \n\
@@ -284,22 +297,6 @@ h2 { \n\
 	color: #9900ff; \n\
 	cursor: pointer; \n\
 	text-decoration: none; \n\
-	margin-right: 1em; \n\
-	padding: 0; \n\
-} \n\
-.link-qbutton { \n\
-	font-family: inherit; \n\
-	font-size: inherit; \n\
-	font-style: inherit; \n\
-	font-weight: inherit; \n\
-	display: inline-block; \n\
-	vertical-align: middle; \n\
-	background-color: transparent; \n\
-	border: none; \n\
-	color: #9900ff; \n\
-	cursor: pointer; \n\
-	text-decoration: none; \n\
-	margin-left: 1em; \n\
 	margin-right: 1em; \n\
 	padding: 0; \n\
 } \n\
@@ -338,12 +335,12 @@ function shuffleArray(array) { \n\
 } \n\
 document.addEventListener('DOMContentLoaded', function() { \n\
 	var pallbutton, currbutton, ctrack, hparent; \n\
-	const audiolinks = document.querySelectorAll('pre a[href$=\".flac\"],\
-pre a[href$=\".mp3\"],\
-pre a[href$=\".m4a\"],\
-pre a[href$=\".opus\"],\
-pre a[href$=\".ogg\"],\
-pre a[href$=\".wav\"]'); \n\
+	const audiolinks = document.querySelectorAll('td a[href$=\".flac\"],\
+td a[href$=\".mp3\"],\
+td a[href$=\".m4a\"],\
+td a[href$=\".opus\"],\
+td a[href$=\".ogg\"],\
+td a[href$=\".wav\"]'); \n\
 	if (audiolinks.length > 0) { \n\
 		const head1 = document.getElementsByTagName('hr')[0]; \n\
 		hparent = head1.parentNode; \n\
@@ -523,6 +520,10 @@ pre a[href$=\".wav\"]'); \n\
 		head2.parentNode.insertBefore(gvolrange, desc.nextSibling); \n\
 		head2.parentNode.insertBefore(ctrack, gvolrange.nextSibling); \n\
 		head2.parentNode.insertBefore(hr2, ctrack.nextSibling); \n\
+		const tr = document.getElementById('maintr'); \n\
+		const pth = document.createElement('th'); \n\
+		pth.innerHTML = 'player';\n\
+		tr.appendChild(pth); \n\
 	} \n\
 	audiolinks.forEach(link => { \n\
 		const div = document.createElement('div'); \n\
@@ -555,11 +556,11 @@ pre a[href$=\".wav\"]'); \n\
 					} else { \n\
 						pbutton.textContent = 'Play'; \n\
 						if (cque + 1 < quemax) { \n\
-							div.innerHTML = ''; \n\
-							div.value = '0'; \n\
 							queuepbtn[++cque].click(); \n\
 						} else \n\
 							cque = 0;\n\
+						div.innerHTML = ''; \n\
+						div.value = '0'; \n\
 						currbutton.textContent = '[' + cque + ']'; \n\
 					} \n\
 				}); \n\
@@ -573,6 +574,11 @@ pre a[href$=\".wav\"]'); \n\
 				seek.addEventListener('input', function() { \n\
 					if (pbutton.textContent != 'Loading') \n\
 						audio.currentTime = (seek.value / 100) * audio.duration; \n\
+					if (audio.currentTime == audio.duration) { \n\
+						pbutton.textContent = 'Play'; \n\
+						div.innerHTML = ''; \n\
+						div.value = '0'; \n\
+					} \n\
 				}); \n\
 				div.appendChild(seek); \n\
 				dur.className = 'audio-player'; \n\
@@ -608,7 +614,7 @@ pre a[href$=\".wav\"]'); \n\
 				}; \n\
 			} else { \n\
 				const audios = div.getElementsByTagName('audio'); \n\
-				if (audios[0].paused) { \n\
+				if (pbutton.textContent == 'Play') { \n\
 					pbutton.textContent = 'Loading'; \n\
 					const playpromise = audios[0].play(); \n\
 					audios[0].onplaying = function() { \n\
@@ -656,9 +662,13 @@ pre a[href$=\".wav\"]'); \n\
 				} \n\
 			} \n\
 		}); \n\
-		link.parentNode.insertBefore(qbutton, link.nextSibling); \n\
-		link.parentNode.insertBefore(pbutton, qbutton.nextSibling); \n\
-		link.parentNode.insertBefore(div, pbutton.nextSibling); \n\
+		const td = link.parentNode; \n\
+		const mytd = document.createElement('td'); \n\
+		mytd.style = 'max-width: 100em;'; \n\
+		td.parentNode.insertBefore(mytd, td.nextSibling); \n\
+		mytd.appendChild(qbutton); \n\
+		mytd.appendChild(pbutton); \n\
+		mytd.appendChild(div); \n\
 	}); \n\
 }); \n\
 </script>"
@@ -776,13 +786,13 @@ static char *ls(time_t now, char *hostname, char *filename, char *path, int *len
 		h2++;
 	}
 
-	len += sprintf(buf+len, "</h1><hr size=1></div><pre>\n"
+	len += sprintf(buf+len, "</h1><hr size=1></div><table>\n"
 				#ifdef PRINT_OWNER
-				"<b>access      user      group     date             "
+				"<tr id=\"maintr\"><th>access</th><th>user</th><th>group</th><th>date</th>"
 				#else
-				"<b>access      date             "
+				"<tr id=\"maintr\"><th>access</th><th>date</th>"
 				#endif
-				"size  name</b>\n\n");
+				"<th>size</th><th>name</th></tr>\n\n");
 
 	for (i = 0; i < count; i++) {
 		if (len > size)
@@ -796,10 +806,10 @@ static char *ls(time_t now, char *hostname, char *filename, char *path, int *len
 		}
 
 		/* mode */
+		len += sprintf(buf+len, "<tr><td>");
 		strmode(files[i]->s.st_mode, buf+len);
 		len += 10;
-		buf[len++] = ' ';
-		buf[len++] = ' ';
+		len += sprintf(buf+len, "</td>");
 
 		/* user */
 		#ifdef PRINT_OWNER
@@ -819,37 +829,37 @@ static char *ls(time_t now, char *hostname, char *filename, char *path, int *len
 
 		/* mtime */
 		if (now - files[i]->s.st_mtime > 60*60*24*30*6)
-			len += strftime(buf+len,255,"%b %d  %Y  ",
+			len += strftime(buf+len,255,"<td>%b %d  %Y</td>",
 							gmtime(&files[i]->s.st_mtime));
 		else
-			len += strftime(buf+len,255,"%b %d %H:%M  ",
+			len += strftime(buf+len,255,"<td>%b %d %H:%M</td>",
 							gmtime(&files[i]->s.st_mtime));
 
 		/* size */
 		if (S_ISDIR(files[i]->s.st_mode)) {
-			len += sprintf(buf+len,"  &lt;DIR&gt;  ");
+			len += sprintf(buf+len,"<td>&lt;DIR&gt;</td>");
 		} else if (!S_ISREG(files[i]->s.st_mode)) {
-			len += sprintf(buf+len,"     --  ");
+			len += sprintf(buf+len,"<td>--</td>");
 		} else if (files[i]->s.st_size < 1024*9) {
-			len += sprintf(buf+len,"%4d  B  ", (int)files[i]->s.st_size);
+			len += sprintf(buf+len,"<td>%4d  B </td>", (int)files[i]->s.st_size);
 		} else if (files[i]->s.st_size < 1024*1024*9) {
-			len += sprintf(buf+len,"%4d kB  ", (int)(files[i]->s.st_size>>10));
+			len += sprintf(buf+len,"<td>%4d kB </td>", (int)(files[i]->s.st_size>>10));
 		} else if ((int64_t)(files[i]->s.st_size) < (int64_t)1024*1024*1024*9) {
-			len += sprintf(buf+len,"%4d MB  ", (int)(files[i]->s.st_size>>20));
+			len += sprintf(buf+len,"<td>%4d MB </td>", (int)(files[i]->s.st_size>>20));
 		} else if ((int64_t)(files[i]->s.st_size) < (int64_t)1024*1024*1024*1024*9) {
-			len += sprintf(buf+len,"%4d GB  ", (int)(files[i]->s.st_size>>30));
+			len += sprintf(buf+len,"<td>%4d GB </td>", (int)(files[i]->s.st_size>>30));
 		} else {
-			len += sprintf(buf+len,"%4d TB  ", (int)(files[i]->s.st_size>>40));
+			len += sprintf(buf+len,"<td>%4d TB </td>", (int)(files[i]->s.st_size>>40));
 		}
 
 		/* filename */
 		if (files[i]->r) {
-			len += sprintf(buf+len,"<a href=\"%s%s\">%s</a>\n",
+			len += sprintf(buf+len,"<td><a href=\"%s%s\">%s</a></td></tr>\n",
 							quote((unsigned char*)files[i]->n,9999),
 							S_ISDIR(files[i]->s.st_mode) ? "/" : "",
 							files[i]->n);
 		} else {
-			len += sprintf(buf+len,"%s\n",files[i]->n);
+			len += sprintf(buf+len,"<td>%s</td></tr>\n",files[i]->n);
 		}
 	}
 	strftime(line,32,"%d/%b/%Y %H:%M:%S GMT",gmtime(&now));
@@ -860,7 +870,7 @@ static char *ls(time_t now, char *hostname, char *filename, char *path, int *len
 			goto oom;
 		buf = re2;
 	}
-	len += sprintf(buf+len, "</pre><hr size=1>\n"
+	len += sprintf(buf+len, "</table><hr size=1>\n"
 				"<small>%s</small>\n"
 				"</body>\n%s\n", line, html5_player);
 	for (i = 0; i < count; i++)
