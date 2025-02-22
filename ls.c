@@ -194,7 +194,6 @@ table, th, td { \n\
 	border-collapse: collapse; \n\
 	padding: 1px; \n\
 	font-family: monospace; \n\
-	max-width: 30em; \n\
 	white-space: nowrap; \n\
 	overflow: hidden; \n\
 	text-overflow: ellipsis; \n\
@@ -335,6 +334,7 @@ function shuffleArray(array) { \n\
 } \n\
 document.addEventListener('DOMContentLoaded', function() { \n\
 	var pallbutton, currbutton, ctrack, hparent; \n\
+	var clip = false; \n\
 	const audiolinks = document.querySelectorAll('td a[href$=\".flac\"],\
 td a[href$=\".mp3\"],\
 td a[href$=\".m4a\"],\
@@ -406,8 +406,18 @@ td a[href$=\".wav\"]'); \n\
 		currbutton.className = 'link-qbutton-alt'; \n\
 		currbutton.textContent = '[0]'; \n\
 		currbutton.addEventListener('click', function() { \n\
-			if (!quemax) \n\
+			if (!quemax) { \n\
+				const pbuttons = document.getElementsByClassName('link-pbutton'); \n\
+				for (var i = 0; i < pbuttons.length; i++) \n\
+					if (pbuttons[i].textContent == 'Pause') { \n\
+						const contentrect = pbuttons[i].getBoundingClientRect(); \n\
+						const hprect = hparent.getBoundingClientRect(); \n\
+						const scrollpos = window.scrollY + contentrect.top - (hprect.height + 10); \n\
+						window.scrollTo({ top: scrollpos }); \n\
+						return; \n\
+					} \n\
 				return; \n\
+			} \n\
 			const div = queue[cque]; \n\
 			const contentrect = div.getBoundingClientRect(); \n\
 			const hprect = hparent.getBoundingClientRect(); \n\
@@ -523,6 +533,8 @@ td a[href$=\".wav\"]'); \n\
 		const tr = document.getElementById('maintr'); \n\
 		const pth = document.createElement('th'); \n\
 		pth.innerHTML = 'player';\n\
+		var fontsz = window.getComputedStyle(tr).fontSize; \n\
+		clip = tr.offsetWidth + (parseFloat(fontsz) * 50) > window.innerWidth; \n\
 		tr.appendChild(pth); \n\
 	} \n\
 	audiolinks.forEach(link => { \n\
@@ -628,9 +640,9 @@ td a[href$=\".wav\"]'); \n\
 						}) \n\
 					}; \n\
 				} else if (pbutton.textContent == 'Pause') { \n\
-					audios[0].pause(); \n\
 					pbutton.textContent = 'Play'; \n\
 					currbutton.textContent = '[' + cque + ']'; \n\
+					audios[0].pause(); \n\
 				} \n\
 			} \n\
 		}); \n\
@@ -664,11 +676,12 @@ td a[href$=\".wav\"]'); \n\
 		}); \n\
 		const td = link.parentNode; \n\
 		const mytd = document.createElement('td'); \n\
-		mytd.style = 'max-width: 100em;'; \n\
 		td.parentNode.insertBefore(mytd, td.nextSibling); \n\
 		mytd.appendChild(qbutton); \n\
 		mytd.appendChild(pbutton); \n\
 		mytd.appendChild(div); \n\
+		if (clip) \n\
+			td.style.maxWidth = '25em'; \n\
 	}); \n\
 }); \n\
 </script>"
