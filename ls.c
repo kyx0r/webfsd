@@ -26,6 +26,7 @@ static pthread_mutex_t lock_dircache = PTHREAD_MUTEX_INITIALIZER;
 /* --------------------------------------------------------- */
 
 #define CACHE_SIZE 32
+//#define PRINT_OWNER
 
 #ifdef PRINT_OWNER
 static char *xgetpwuid(uid_t uid)
@@ -193,6 +194,8 @@ table, th, td { \n\
 	border:1px solid gray; \n\
 	border-collapse: collapse; \n\
 	padding: 1px; \n\
+	padding-left: 1em; \n\
+	padding-right: 1em; \n\
 	font-family: monospace; \n\
 	white-space: nowrap; \n\
 	overflow: hidden; \n\
@@ -334,15 +337,16 @@ function shuffleArray(array) { \n\
 } \n\
 document.addEventListener('DOMContentLoaded', function() { \n\
 	var pallbutton, currbutton, ctrack, hparent; \n\
-	var clip = false; \n\
-	const audiolinks = document.querySelectorAll('td a[href$=\".flac\"],\
+	var tempPage = document.body.cloneNode(false); \n\
+	tempPage.innerHTML = document.body.innerHTML; \n\
+	const audiolinks = tempPage.querySelectorAll('td a[href$=\".flac\"],\
 td a[href$=\".mp3\"],\
 td a[href$=\".m4a\"],\
 td a[href$=\".opus\"],\
 td a[href$=\".ogg\"],\
 td a[href$=\".wav\"]'); \n\
 	if (audiolinks.length > 0) { \n\
-		const head1 = document.getElementsByTagName('hr')[0]; \n\
+		const head1 = tempPage.getElementsByTagName('hr')[0]; \n\
 		hparent = head1.parentNode; \n\
 		hparent.className = 'sticky'; \n\
 		const head2 = document.createElement('h2'); \n\
@@ -398,7 +402,8 @@ td a[href$=\".wav\"]'); \n\
 				pidx = 0; \n\
 				cque--; \n\
 				currbutton.textContent = '[' + cque + ']'; \n\
-				ctrack.innerHTML = queuebtn[cque].previousSibling.innerHTML; \n\
+				const link = queuebtn[cque].parentNode.previousSibling.lastChild; \n\
+				ctrack.innerHTML = link.innerHTML; \n\
 			} \n\
 		}); \n\
 		head2.appendChild(prevbutton); \n\
@@ -450,7 +455,8 @@ td a[href$=\".wav\"]'); \n\
 				pidx = 0; \n\
 				cque++; \n\
 				currbutton.textContent = '[' + cque + ']'; \n\
-				ctrack.innerHTML = queuebtn[cque].previousSibling.innerHTML; \n\
+				const link = queuebtn[cque].parentNode.previousSibling.lastChild; \n\
+				ctrack.innerHTML = link.innerHTML; \n\
 			} \n\
 		}); \n\
 		head2.appendChild(nextbutton); \n\
@@ -530,12 +536,10 @@ td a[href$=\".wav\"]'); \n\
 		head2.parentNode.insertBefore(gvolrange, desc.nextSibling); \n\
 		head2.parentNode.insertBefore(ctrack, gvolrange.nextSibling); \n\
 		head2.parentNode.insertBefore(hr2, ctrack.nextSibling); \n\
-		const tr = document.getElementById('maintr'); \n\
-		const pth = document.createElement('th'); \n\
-		pth.innerHTML = 'player';\n\
-		var fontsz = window.getComputedStyle(tr).fontSize; \n\
-		clip = tr.offsetWidth + (parseFloat(fontsz) * 50) > window.innerWidth; \n\
-		tr.appendChild(pth); \n\
+		const tr = tempPage.querySelector('#maintr'); \n\
+		const th = document.createElement('th'); \n\
+		th.innerHTML = 'player';\n\
+		tr.appendChild(th); \n\
 	} \n\
 	audiolinks.forEach(link => { \n\
 		const div = document.createElement('div'); \n\
@@ -588,6 +592,7 @@ td a[href$=\".wav\"]'); \n\
 						audio.currentTime = (seek.value / 100) * audio.duration; \n\
 					if (audio.currentTime == audio.duration) { \n\
 						pbutton.textContent = 'Play'; \n\
+						paused[pidx++] = pbutton; \n\
 						div.innerHTML = ''; \n\
 						div.value = '0'; \n\
 					} \n\
@@ -675,14 +680,15 @@ td a[href$=\".wav\"]'); \n\
 			} \n\
 		}); \n\
 		const td = link.parentNode; \n\
+		td.style.maxWidth = '30vw'; \n\
 		const mytd = document.createElement('td'); \n\
-		td.parentNode.insertBefore(mytd, td.nextSibling); \n\
+		mytd.style.maxWidth = '100vw'; \n\
 		mytd.appendChild(qbutton); \n\
 		mytd.appendChild(pbutton); \n\
 		mytd.appendChild(div); \n\
-		if (clip) \n\
-			td.style.maxWidth = '25em'; \n\
+		td.parentNode.insertBefore(mytd, td.nextSibling); \n\
 	}); \n\
+	document.body = tempPage; \n\
 }); \n\
 </script>"
 
@@ -698,7 +704,11 @@ static char *ls(time_t now, char *hostname, char *filename, char *path, int *len
 	#ifdef PRINT_OWNER
 	char *pw = NULL, *gr = NULL;
 	#endif
+	#ifdef HTML5_PLAYER
 	char html5_player[] = HTML5_PLAYER;
+	#else
+	char html5_player[] = "";
+	#endif
 
 	if (debug)
 		fprintf(stderr,"dir: reading %s\n",filename);
@@ -828,16 +838,16 @@ static char *ls(time_t now, char *hostname, char *filename, char *path, int *len
 		#ifdef PRINT_OWNER
 		pw = xgetpwuid(files[i]->s.st_uid);
 		if (NULL != pw)
-			len += sprintf(buf+len,"%-8.8s  ",pw);
+			len += sprintf(buf+len,"<td>%-8.8s</td>",pw);
 		else
-			len += sprintf(buf+len,"%8d  ",(int)files[i]->s.st_uid);
+			len += sprintf(buf+len,"<td>%8d</td>",(int)files[i]->s.st_uid);
 
 		/* group */
 		gr = xgetgrgid(files[i]->s.st_gid);
 		if (NULL != gr)
-			len += sprintf(buf+len,"%-8.8s  ",gr);
+			len += sprintf(buf+len,"<td>%-8.8s</td>",gr);
 		else
-			len += sprintf(buf+len,"%8d  ",(int)files[i]->s.st_gid);
+			len += sprintf(buf+len,"<td>%8d</td>",(int)files[i]->s.st_gid);
 		#endif
 
 		/* mtime */
