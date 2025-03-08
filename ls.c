@@ -450,6 +450,12 @@ td a[href$=\".wav\"]'); \n\
 						window.scrollTo({ top: scrollpos }); \n\
 						return; \n\
 					} \n\
+				if (pidx) { \n\
+					const contentrect = paused[pidx-1].getBoundingClientRect(); \n\
+					const hprect = hparent.getBoundingClientRect(); \n\
+					const scrollpos = window.scrollY + contentrect.top - (hprect.height + 10); \n\
+					window.scrollTo({ top: scrollpos }); \n\
+				} \n\
 				return; \n\
 			} \n\
 			const div = queue[cque]; \n\
