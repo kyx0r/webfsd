@@ -338,7 +338,6 @@ table, th, td { \n\
     pointer-events: none; \n\
 } \n\
 </style> \n\
-</style> \n\
 <script> \n\
 var queue = []; \n\
 var queuebtn = []; \n\
@@ -366,16 +365,14 @@ function shuffleArray(array) { \n\
 } \n\
 document.addEventListener('DOMContentLoaded', function() { \n\
 	var pallbutton, currbutton, ctrack, hparent; \n\
-	var tempPage = document.body.cloneNode(false); \n\
-	tempPage.innerHTML = document.body.innerHTML; \n\
-	const audiolinks = tempPage.querySelectorAll('td a[href$=\".flac\"],\
+	const audiolinks = document.body.querySelectorAll('td a[href$=\".flac\"],\
 td a[href$=\".mp3\"],\
 td a[href$=\".m4a\"],\
 td a[href$=\".opus\"],\
 td a[href$=\".ogg\"],\
 td a[href$=\".wav\"]'); \n\
 	if (audiolinks.length > 0) { \n\
-		const head1 = tempPage.getElementsByTagName('hr')[0]; \n\
+		const head1 = document.body.getElementsByTagName('hr')[0]; \n\
 		hparent = head1.parentNode; \n\
 		hparent.className = 'sticky'; \n\
 		const head2 = document.createElement('h2'); \n\
@@ -571,7 +568,7 @@ td a[href$=\".wav\"]'); \n\
 		head2.parentNode.insertBefore(gvolrange, desc.nextSibling); \n\
 		head2.parentNode.insertBefore(ctrack, gvolrange.nextSibling); \n\
 		head2.parentNode.insertBefore(hr2, ctrack.nextSibling); \n\
-		const tr = tempPage.querySelector('#maintr'); \n\
+		const tr = document.body.querySelector('#maintr'); \n\
 		const th = document.createElement('th'); \n\
 		th.innerHTML = 'player';\n\
 		tr.appendChild(th); \n\
@@ -724,8 +721,6 @@ td a[href$=\".wav\"]'); \n\
 		mytd.appendChild(div); \n\
 		td.parentNode.insertBefore(mytd, td.nextSibling); \n\
 	}); \n\
-	if (audiolinks.length > 0) \n\
-		document.body = tempPage; \n\
 }); \n\
 </script>"
 
@@ -807,7 +802,7 @@ static char *ls(time_t now, char *hostname, char *filename, char *path, int *len
 		qsort(files,count,sizeof(struct myfile*),compare_files);
 
 	/* output */
-	size = LS_ALLOC_SIZE;
+	size = LS_ALLOC_SIZE + sizeof(html5_player);
 	buf  = malloc(size);
 	if (NULL == buf)
 		goto oom;
@@ -818,10 +813,10 @@ static char *ls(time_t now, char *hostname, char *filename, char *path, int *len
 				"<head>"
 				"<title>%s:%d%s</title>"
 				"<meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\" />"
-				"</head>\n"
+				"%s</head>\n"
 				"<body bgcolor=#000000 text=#ffffff link=#0066ff vlink=#00ccff alink=#cc00ff>\n"
 				"<div><h1>listing: \n",
-				hostname,tcp_port,path);
+				hostname,tcp_port,path,html5_player);
 
 	h1 = path, h2 = path+1;
 	for (;;) {
@@ -923,8 +918,8 @@ static char *ls(time_t now, char *hostname, char *filename, char *path, int *len
 		}
 	}
 	strftime(line,32,"%d/%b/%Y %H:%M:%S GMT",gmtime(&now));
-	if (len + sizeof(html5_player) + 1024 > size) {
-		size += sizeof(html5_player) + 1024;
+	if (len + 128 > size) {
+		size += 128;
 		re2 = realloc(buf,size);
 		if (NULL == re2)
 			goto oom;
@@ -932,7 +927,7 @@ static char *ls(time_t now, char *hostname, char *filename, char *path, int *len
 	}
 	len += sprintf(buf+len, "</table><hr size=1>\n"
 				"<small>%s</small>\n"
-				"</body>\n%s\n", line, html5_player);
+				"</body>\n", line);
 	for (i = 0; i < count; i++)
 		free(files[i]);
 	if (count)
