@@ -231,10 +231,8 @@ table, th, td { \n\
 	border-color: #d3d3d3; \n\
 } \n\
 .audio-volume { \n\
-	display: inline-block; \n\
 	vertical-align: middle; \n\
 	width: 5em; \n\
-	margin: 0; \n\
 	margin-right: 1em; \n\
 	-webkit-appearance: none; \n\
 	background: #808080; \n\
@@ -248,10 +246,8 @@ table, th, td { \n\
 	border-color: #d3d3d3; \n\
 } \n\
 .audio-seek { \n\
-	display: inline-block; \n\
 	vertical-align: middle; \n\
 	width: 15em; \n\
-	margin: 0; \n\
 	margin-right: 1em; \n\
 	-webkit-appearance: none; \n\
 	background: #808080; \n\
@@ -278,7 +274,7 @@ table, th, td { \n\
 	border-width: 1px; \n\
 	border-color: #00ccff; \n\
 } \n\
-.audio-volume::-moz-range-thumb, .audio-seek::-moz-range-thumb, .gvolume-seek::-moz-range-thumb{ \n\
+.audio-volume::-moz-range-thumb, .audio-seek::-moz-range-thumb, .gvolume-seek::-moz-range-thumb { \n\
 	width: 1em; \n\
 	height: 0.5em; \n\
 	cursor: pointer; \n\
@@ -307,6 +303,39 @@ table, th, td { \n\
 	top: 0; \n\
 	z-index: 1000; \n\
 	background-color: black; \n\
+} \n\
+.loop-checkbox { \n\
+	margin-right: 0.5em; \n\
+	vertical-align: middle; \n\
+	appearance: none; \n\
+	width: 0.75em; \n\
+	height: 0.75em; \n\
+	opacity: 0.7; \n\
+	background-color: #808080; \n\
+	border-style: solid; \n\
+	border-width: 1px; \n\
+	border-color: #d3d3d3; \n\
+	position: relative; \n\
+} \n\
+.loop-checkbox:hover { \n\
+	opacity: 1.0; \n\
+} \n\
+.loop-checkbox:checked { \n\
+	opacity: 1.0; \n\
+	background-color: transparent; \n\
+	border-color: transparent; \n\
+} \n\
+.loop-checkbox:checked::before { \n\
+    content: '';  \n\
+    position: absolute; \n\
+    opacity: 1.0; \n\
+    top: 0; \n\
+    left: 0; \n\
+    width: 100%; \n\
+    height: 100%; \n\
+    background-color: #00ccff; \n\
+    clip-path: polygon(14% 44%, 0 65%, 50% 100%, 100% 16%, 80% 0%, 43% 62%); \n\
+    pointer-events: none; \n\
 } \n\
 </style> \n\
 </style> \n\
@@ -578,6 +607,7 @@ td a[href$=\".wav\"]'); \n\
 						div.innerHTML = ''; \n\
 						div.value = '0'; \n\
 						currbutton.textContent = '[' + cque + ']'; \n\
+						paused[pidx++] = pbutton; \n\
 					} \n\
 				}); \n\
 				div.appendChild(audio); \n\
@@ -609,7 +639,7 @@ td a[href$=\".wav\"]'); \n\
 					audio.volume = vol.value / 100; \n\
 				}); \n\
 				div.appendChild(vol); \n\
-				loop.className = 'audio-player'; \n\
+				loop.className = 'loop-checkbox'; \n\
 				loop.type = 'checkbox'; \n\
 				loop.name = 'loop'; \n\
 				div.appendChild(loop); \n\
