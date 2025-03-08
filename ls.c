@@ -724,7 +724,8 @@ td a[href$=\".wav\"]'); \n\
 		mytd.appendChild(div); \n\
 		td.parentNode.insertBefore(mytd, td.nextSibling); \n\
 	}); \n\
-	document.body = tempPage; \n\
+	if (audiolinks.length > 0) \n\
+		document.body = tempPage; \n\
 }); \n\
 </script>"
 
